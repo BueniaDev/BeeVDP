@@ -27,7 +27,7 @@
 // as it is refered to in the V9938 Technical Data Book.
 //
 // TODO list:
-// Implement multi-color and undocumented modes
+// Implement Graphics II, multi-color and undocumented modes
 // Figure out RGB colors for PAL VDP (i.e. TMS9929A)
 // Implement 4K/16K VRAM bank selection
 // Implement sprite rendering
@@ -196,16 +196,100 @@ namespace beevdp
     // (aka. SCREEN 1 in MSX BASIC, and GRAPHIC 1 in V9938 syntax)
     void TMS9918A::render_graphics1()
     {
-	// TODO: Implement mode 0
-	return;
+	uint16_t vcount = vcounter;
+	uint32_t name_base = (pattern_name << 10);
+	uint32_t color_base = (color_table << 6);
+	uint32_t pattern_base = (pattern_gen << 11);
+	uint32_t ypos = ((vcount >> 3) << 5);
+
+	for (int tile_col = 0; tile_col < 32; tile_col++)
+	{
+	    uint32_t name_addr = (name_base + ypos + tile_col);
+	    uint8_t name_byte = vram[name_addr];
+
+	    uint32_t pattern_addr = (pattern_base + (name_byte << 3) + (vcount & 0x7));
+	    uint8_t pattern_byte = vram[pattern_addr];
+
+	    uint32_t color_addr = (color_base + (name_byte >> 3));
+	    uint8_t color_byte = vram[color_addr];
+
+	    for (int pixel = 0; pixel < 8; pixel++)
+	    {
+		int xpos = ((tile_col << 3) + pixel);
+		int colorline = (7 - pixel);
+
+		int pixel_color = 0;
+
+		if (testbit(pattern_byte, colorline))
+		{
+		    pixel_color = (color_byte >> 4);
+		}
+		else
+		{
+		    pixel_color = (color_byte & 0xF);
+		}
+
+		if (pixel_color == 0)
+		{
+		    pixel_color = backdrop_color;
+		}
+
+		BeeVDPRGB color = get_color(pixel_color);
+
+		if (xpos < getWidth())
+		{
+		    set_pixel(xpos, vcount, color);
+		}
+	    }
+	}
     }
 
     // Render in mode 1
     // (aka. SCREEN 0 in MSX BASIC, and TEXT 1 in V9938 syntax)
     void TMS9918A::render_text1()
     {
-	// TODO: Implement mode 1
-	return;
+	uint16_t vcount = vcounter;
+	uint32_t name_base = (pattern_name << 10);
+	uint32_t pattern_base = (pattern_gen << 11);
+	uint32_t ypos = ((vcount >> 3) * 40);
+
+	for (int tile_col = 0; tile_col < 40; tile_col++)
+	{
+	    uint32_t name_addr = (name_base + ypos + tile_col);
+	    uint8_t name_byte = vram[name_addr];
+
+	    uint32_t pattern_addr = (pattern_base + (name_byte << 3) + (vcount & 0x7));
+	    uint8_t pattern_byte = vram[pattern_addr];
+
+	    for (int pixel = 0; pixel < 6; pixel++)
+	    {
+		int xpos = ((tile_col * 6) + (8 + pixel));
+		int colorline = (7 - pixel);
+
+		int pixel_color = 0;
+
+		if (testbit(pattern_byte, colorline))
+		{
+		    pixel_color = text_color;
+		}
+		else
+		{
+		    pixel_color = backdrop_color;
+		}
+
+		if (pixel_color == 0)
+		{
+		    pixel_color = backdrop_color;
+		}
+
+		BeeVDPRGB color = get_color(pixel_color);
+
+		if (xpos < getWidth())
+		{
+		    set_pixel(xpos, vcount, color);
+		}
+	    }
+	}
     }
 
     // Render in mode 2
