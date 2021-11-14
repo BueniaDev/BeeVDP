@@ -337,17 +337,72 @@ void mode2_test(TMS9918A &vdp)
 	vdp.writeData((i & 0xFF));
     }
 
-    plot_pixel_m2(vdp, 0, 0);
-    plot_pixel_m2(vdp, 128, 0);
-    plot_pixel_m2(vdp, 255, 0);
-    plot_pixel_m2(vdp, 0, 96);
     plot_pixel_m2(vdp, 128, 96);
-    plot_pixel_m2(vdp, 255, 96);
-    plot_pixel_m2(vdp, 0, 191);
-    plot_pixel_m2(vdp, 128, 191);
-    plot_pixel_m2(vdp, 255, 191);
 
     vdp.writeControl(0xC2);
+    vdp.writeControl(0x81);
+}
+
+void mode3_test(TMS9918A &vdp)
+{
+    cout << "Launching Multicolor mode..." << endl;
+    // 0x0000-0x07FF: Sprite patterns
+    // 0x0800-0x0DFF: Pattern table
+    // 0x0E00-0x0FFF: Unused
+    // 0x1000-0x107F: Sprite attributes
+    // 0x1080-0x13FF: Unused
+    // 0x1400-0x16FF: Name table
+    // 0x1700-0x3FFF: Unused
+
+    vdp.writeControl(0x00);
+    vdp.writeControl(0x80);
+
+    vdp.writeControl(0x8B);
+    vdp.writeControl(0x81);
+
+    vdp.writeControl(0x05);
+    vdp.writeControl(0x82);
+
+    vdp.writeControl(0x01);
+    vdp.writeControl(0x84);
+
+    vdp.writeControl(0x20);
+    vdp.writeControl(0x85);
+
+    vdp.writeControl(0x00);
+    vdp.writeControl(0x86);
+
+    vdp.writeControl(0x04);
+    vdp.writeControl(0x87);
+
+    vdp.writeControl(0x00);
+    vdp.writeControl(0x54); // 0x14 | 0x40
+
+    for (int i = 0; i < 6; i++)
+    {
+	uint8_t data_offs = (i << 5);
+
+	for (int j = 0; j < 128; j++)
+	{
+	    uint8_t data_byte = (data_offs + (j & 0x1F));
+	    vdp.writeData(data_byte);
+	}
+    }
+
+    vdp.writeControl(0x00);
+    vdp.writeControl(0x48); // 0x08 | 0x40
+
+    for (int i = 0; i < 0x600; i++)
+    {
+	vdp.writeData(0x44);
+    }
+
+    vdp.writeControl(0x80);
+    vdp.writeControl(0x4B); // 0x0B | 0x40
+
+    vdp.writeData(0xF4);
+
+    vdp.writeControl(0xCB);
     vdp.writeControl(0x81);
 }
 
@@ -414,6 +469,7 @@ int main(int argc, char *argv[])
     cout << "0: Display example of Graphics I mode" << endl;
     cout << "1: Display example of Text mode" << endl;
     cout << "2: Display example of Graphics II mode" << endl;
+    cout << "3: Display example of Multicolor mode" << endl;
     cout << "D: Dump VRAM to file" << endl;
     cout << endl;
 
@@ -447,6 +503,12 @@ int main(int argc, char *argv[])
 			{
 			    reset_vdp(vdp);
 			    mode2_test(vdp);
+			}
+			break;
+			case SDLK_3:
+			{
+			    reset_vdp(vdp);
+			    mode3_test(vdp);
 			}
 			break;
 			case SDLK_d:

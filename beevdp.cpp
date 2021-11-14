@@ -27,7 +27,7 @@
 // as it is refered to in the V9938 Technical Data Book.
 //
 // TODO list:
-// Implement Graphics II, multi-color and undocumented modes
+// Implement multi-color and undocumented modes
 // Figure out RGB colors for PAL VDP (i.e. TMS9929A)
 // Implement 4K/16K VRAM bank selection
 // Implement sprite rendering
@@ -180,6 +180,8 @@ namespace beevdp
 	    case 1: render_text1(); break;
 	    // Mode 2 (aka. graphics II mode)
 	    case 2: render_graphics2(); break;
+	    // Mode 3 (aka. multicolor mode)
+	    case 4: render_multicolor(); break;
 	    default:
 	    {
 		cout << "Unrecognized VDP mode of " << dec << int(mode_val) << endl;
@@ -296,7 +298,63 @@ namespace beevdp
     // (aka. SCREEN 2 in MSX BASIC, and GRAPHIC 2 in V9938 syntax)
     void TMS9918A::render_graphics2()
     {
-	// TODO: Implement mode 2
+	uint16_t vcount = vcounter;
+	uint32_t name_base = (pattern_name << 10);
+	uint32_t pattern_base = (testbit(pattern_gen, 2) << 13);
+	uint16_t pattern_mask = (((pattern_gen & 0x3) << 8) | 0xFF);
+	uint32_t color_base = (testbit(color_table, 7) << 13);
+	uint32_t color_mask = (((color_table & 0x7F) << 3) | 0x7);
+	uint32_t ypos = ((vcount >> 3) << 5);
+
+	for (int tile_col = 0; tile_col < 32; tile_col++)
+	{
+	    uint32_t name_addr = (name_base + ypos + tile_col);
+	    uint16_t name_word = (vram[name_addr] + ((vcount >> 6) << 8));
+
+	    uint16_t pattern_word = (name_word & pattern_mask);
+	    uint32_t pattern_addr = (pattern_base + (pattern_word << 3) + (vcount & 0x7));
+	    uint8_t pattern_byte = vram[pattern_addr];
+
+	    uint16_t color_word = (name_word & color_mask);
+	    uint32_t color_addr = (color_base + (color_word >> 3));
+	    uint8_t color_byte = vram[color_addr];
+
+	    for (int pixel = 0; pixel < 8; pixel++)
+	    {
+		int xpos = ((tile_col << 3) + pixel);
+		int colorline = (7 - pixel);
+
+		int pixel_color = 0;
+
+		if (testbit(pattern_byte, colorline))
+		{
+		    pixel_color = (color_byte >> 4);
+		}
+		else
+		{
+		    pixel_color = (color_byte & 0xF);
+		}
+
+		if (pixel_color == 0)
+		{
+		    pixel_color = backdrop_color;
+		}
+
+		BeeVDPRGB color = get_color(pixel_color);
+
+		if (xpos < getWidth())
+		{
+		    set_pixel(xpos, vcount, color);
+		}
+	    }
+	}
+    }
+
+    // Render in mode 3
+    // (aka. SCREEN 3 in MSX BASIC, and MULTICOLOR in V9938 syntax)
+    void TMS9918A::render_multicolor()
+    {
+	// TODO: Implement mode 3
 	return;
     }
 

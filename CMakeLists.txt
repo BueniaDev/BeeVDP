@@ -35,6 +35,7 @@ if (BUILD_VDP_TESTS STREQUAL "ON")
     include_directories(${PROJECT_NAME} ${BEEVDP_INCLUDE_DIR})
     target_link_libraries(${PROJECT_NAME} libbeevdp)
     find_package(SDL2 REQUIRED)
+    include_directories(${SDL2_INCLUDE_DIRS})
 
     if (TARGET SDL2::SDL2)
 	target_link_libraries(${PROJECT_NAME} SDL2::SDL2)

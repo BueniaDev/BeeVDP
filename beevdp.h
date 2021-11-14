@@ -101,6 +101,7 @@ namespace beevdp
 	    void render_graphics1();
 	    void render_text1();
 	    void render_graphics2();
+	    void render_multicolor();
 
 	    void render_disabled();
 
