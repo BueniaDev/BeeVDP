@@ -316,7 +316,7 @@ namespace beevdp
 	    uint8_t pattern_byte = vram[pattern_addr];
 
 	    uint16_t color_word = (name_word & color_mask);
-	    uint32_t color_addr = (color_base + (color_word >> 3));
+	    uint32_t color_addr = (color_base + (color_word << 3) + (vcount & 0x7));
 	    uint8_t color_byte = vram[color_addr];
 
 	    for (int pixel = 0; pixel < 8; pixel++)
