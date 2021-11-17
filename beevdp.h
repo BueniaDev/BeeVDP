@@ -102,6 +102,7 @@ namespace beevdp
 	    void render_text1();
 	    void render_graphics2();
 	    void render_multicolor();
+	    void render_bogus_mode();
 
 	    void render_disabled();
 

@@ -27,7 +27,7 @@
 // as it is refered to in the V9938 Technical Data Book.
 //
 // TODO list:
-// Implement multi-color and undocumented modes
+// Implement remaining undocumented modes (i.e. mode 1+2 and mode 2+3)
 // Figure out RGB colors for PAL VDP (i.e. TMS9929A)
 // Implement 4K/16K VRAM bank selection
 // Implement sprite rendering
@@ -182,6 +182,10 @@ namespace beevdp
 	    case 2: render_graphics2(); break;
 	    // Mode 3 (aka. multicolor mode)
 	    case 4: render_multicolor(); break;
+	    // Mode 1+3 (aka. undocumented 'bogus' mode A)
+	    case 5: render_bogus_mode(); break;
+	    // Mode 1+2+3 (aka. undocumented 'bogus' mode B)
+	    case 7: render_bogus_mode(); break;
 	    default:
 	    {
 		cout << "Unrecognized VDP mode of " << dec << int(mode_val) << endl;
@@ -354,8 +358,86 @@ namespace beevdp
     // (aka. SCREEN 3 in MSX BASIC, and MULTICOLOR in V9938 syntax)
     void TMS9918A::render_multicolor()
     {
-	// TODO: Implement mode 3
-	return;
+	uint16_t vcount = vcounter;
+	uint32_t name_base = (pattern_name << 10);
+	uint32_t pattern_base = (pattern_gen << 11);
+	uint32_t ypos = ((vcount >> 3) << 5);
+
+	for (int tile_col = 0; tile_col < 32; tile_col++)
+	{
+	    uint32_t name_addr = (name_base + ypos + tile_col);
+	    uint8_t name_byte = vram[name_addr];
+
+	    uint32_t pattern_addr = (pattern_base + (name_byte << 3) + ((vcount >> 2) & 0x7));
+	    uint8_t pattern_byte = vram[pattern_addr];
+
+	    for (int pixel = 0; pixel < 8; pixel++)
+	    {
+		int xpos = ((tile_col << 3) + pixel);
+		int pixel_color = 0;
+
+		if (pixel < 4)
+		{
+		    pixel_color = (pattern_byte >> 4);
+		}
+		else
+		{
+		    pixel_color = (pattern_byte & 0xF);
+		}
+
+		if (pixel_color == 0)
+		{
+		    pixel_color = backdrop_color;
+		}
+
+		BeeVDPRGB color = get_color(pixel_color);
+
+		if (xpos < getWidth())
+		{
+		    set_pixel(xpos, vcount, color);
+		}
+	    }
+	}
+    }
+
+    // Render undocumented 'bogus' mode (aka. mode 1+3/mode 1+2+3)
+    void TMS9918A::render_bogus_mode()
+    {
+	uint16_t vcount = vcounter;
+	int fg_color = text_color;
+	int bg_color = backdrop_color;
+
+	for (int tile_col = 0; tile_col < 40; tile_col++)
+	{
+	    for (int pixel = 0; pixel < 6; pixel++)
+	    {
+		// This mode has a left border of 6 pixels
+		int xpos = ((tile_col * 6) + (6 + pixel));
+
+		int pixel_color = 0;
+
+		if (pixel < 4)
+		{
+		    pixel_color = fg_color;
+		}
+		else
+		{
+		    pixel_color = bg_color;
+		}
+
+		if (pixel_color == 0)
+		{
+		    pixel_color = backdrop_color;
+		}
+
+		BeeVDPRGB color = get_color(pixel_color);
+
+		if (xpos < getWidth())
+		{
+		    set_pixel(xpos, vcount, color);
+		}
+	    }
+	}
     }
 
     // Update current VDP mode

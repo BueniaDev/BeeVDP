@@ -406,6 +406,38 @@ void mode3_test(TMS9918A &vdp)
     vdp.writeControl(0x81);
 }
 
+void bogus_mode5_test(TMS9918A &vdp)
+{
+    cout << "Launching bogus mode 5..." << endl;
+    vdp.writeControl(0x00);
+    vdp.writeControl(0x80);
+
+    vdp.writeControl(0x9B);
+    vdp.writeControl(0x81);
+
+    vdp.writeControl(0x54);
+    vdp.writeControl(0x87);
+
+    vdp.writeControl(0xDB);
+    vdp.writeControl(0x81);
+}
+
+void bogus_mode7_test(TMS9918A &vdp)
+{
+    cout << "Launching bogus mode 7..." << endl;
+    vdp.writeControl(0x02);
+    vdp.writeControl(0x80);
+
+    vdp.writeControl(0x9B);
+    vdp.writeControl(0x81);
+
+    vdp.writeControl(0x54);
+    vdp.writeControl(0x87);
+
+    vdp.writeControl(0xDB);
+    vdp.writeControl(0x81);
+}
+
 void dump_vram(TMS9918A &vdp)
 {
     vdp.writeControl(0x00);
@@ -470,6 +502,8 @@ int main(int argc, char *argv[])
     cout << "1: Display example of Text mode" << endl;
     cout << "2: Display example of Graphics II mode" << endl;
     cout << "3: Display example of Multicolor mode" << endl;
+    cout << "5: Display example of bogus mode 1+3" << endl;
+    cout << "7: Display example of bogus mode 1+2+3" << endl;
     cout << "D: Dump VRAM to file" << endl;
     cout << endl;
 
@@ -509,6 +543,18 @@ int main(int argc, char *argv[])
 			{
 			    reset_vdp(vdp);
 			    mode3_test(vdp);
+			}
+			break;
+			case SDLK_5:
+			{
+			    reset_vdp(vdp);
+			    bogus_mode5_test(vdp);
+			}
+			break;
+			case SDLK_7:
+			{
+			    reset_vdp(vdp);
+			    bogus_mode7_test(vdp);
 			}
 			break;
 			case SDLK_d:
